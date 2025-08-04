@@ -1,0 +1,87 @@
+======================================
+REACT_FIBER_NOTES.txt
+======================================
+// Date: 05-Aug-2025
+// Purpose: React Fiber ko aasan bhasha mein samjhana.
+
+React Fiber, simple shabdon mein, React ka core engine ka ek naya version hai.
+Iska main maqsad React apps ko, khaaskar animations aur complex UI ke liye,
+zyada smooth aur responsive banana hai.
+
+
+>> KYUN ZAROORI HAI? (The Main Goals)
+--------------------------------------
+* Incremental Rendering: Bade rendering ke kaam ko chote-chote tukdon (chunks)
+    mein baant dena, taaki browser hang na ho.
+
+* Prioritization: Alag-alag updates ko priority dena. Jaise, user ke click se
+    hone waala animation, network se aa rahe data se zyada important hai.
+
+* Pause & Resume: Kaam ko beech mein rokna (pause), baad mein wahin se shuru
+    karna (resume), ya zaroorat na hone par cancel karna.
+
+
+>> MAIN CONCEPTS KO AASANI SE SAMJHO
+------------------------------------
+
+# Reconciliation (Virtual DOM ka Diffing)
+Yeh woh process hai jisse React pata lagata hai ki UI mein kya-kya badalna hai.
+Yeh puraane UI tree aur naye UI tree ko compare karta hai aur sirf zaroori
+changes hi DOM mein apply karta hai. Fiber ne is process ko fundamentally
+badal diya hai.
+
+# Scheduling (Kaam Kab Aur Kaise Hoga)
+Pehle React saara update ek hi baar mein (in a single tick) karne ki koshish
+karta tha, jisse UI slow ho sakta tha.
+
+Fiber ke saath, React ab ek smart manager ban gaya hai. Woh decide karta hai
+ki kaun sa kaam kab karna hai. User interaction ko hamesha pehli priority milti hai.
+
+
+>> FIBER AAKHIR HAI KYA?
+-------------------------
+Bahut simple hai:
+
+* Ek Fiber ek "unit of work" hai. Socho ki yeh ek single component ke liye
+    to-do list ka ek item hai.
+
+* Aap ise ek special "virtual stack frame" bhi samajh sakte hain. Normal computer call stack ko aap beech mein rok nahi sakte, par React apne Fiber
+    stack ko jab chahe pause, resume, ya cancel kar sakta hai.
+
+* Isi power ki wajah se scheduling aur prioritization possible ho paata hai.
+
+
+>> EK FIBER OBJECT KE ANDAR KYA HOTA HAI? (Structure)
+-----------------------------------------------------
+Har fiber ek JavaScript object hai jismein component ki saari jaankari hoti hai:
+
+- type & key:
+  Yeh batata hai ki component kaun sa hai (e.g., MyComponent ya 'div') aur uski
+  unique key kya hai.
+
+- child & sibling:
+  Yeh fibers aapas mein linked list ki tarah jude hote hain. `child` uss fiber ke
+  pehle bachhe ko point karta hai aur `sibling` uske bagal waale bhai ko.
+
+- return:
+  Yeh parent fiber ko point karta hai. Kaam khatam hone par control yahin
+  wapas jaata hai.
+
+- pendingProps & memoizedProps:
+  `pendingProps` naye props hain jo abhi mile hain. `memoizedProps` puraane
+  props hain jin par kaam ho chuka hai. Inhe compare karke React decide karta
+  hai ki re-render karna hai ya nahi.
+
+- alternate:
+  Yeh bahut important concept hai. Kisi bhi time par ek component ke do fiber
+  ho sakte hain:
+    -> current: Jo abhi screen par dikh raha hai.
+    -> work-in-progress: Jis par background mein kaam chal raha hai.
+  Isse React naya UI background mein taiyaar kar sakta hai bina current UI ko
+  disturb kiye.
+
+- output:
+  Yeh fiber ka final result hota hai (jaise ki HTML ka `<div>` ya `<span>`).
+  Yeh sirf end-nodes (host components) par banta hai aur upar parent tak jaata hai.
+
+// --- End of File ---
