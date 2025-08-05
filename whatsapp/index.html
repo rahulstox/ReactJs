@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Desktop Clone (Editable)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --background-dark: #111b21;
+            --background-light: #202c33;
+            --sent-bubble: #005c4b;
+            --text-primary: #e9edef;
+            --text-secondary: #8696a0;
+            --icon-color: #aebac1;
+            --panel-header-background: #202c33;
+            --default-background: #0c1317;
+            --whatsapp-green-light: #008069;
+        }
+        body {
+            background-color: var(--default-background);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+        .whatsapp-layout {
+            display: flex;
+            height: 100vh;
+            max-width: 1600px;
+            margin: auto;
+        }
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 30%;
+            max-width: 420px;
+            min-width: 340px;
+            background-color: var(--background-dark);
+            border-right: 1px solid var(--background-light);
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-header {
+            background-color: var(--panel-header-background);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .sidebar-icons {
+            margin-left: auto;
+            display: flex;
+            gap: 24px;
+            color: var(--icon-color);
+            font-size: 1.2rem;
+        }
+        .search-container {
+            padding: 8px 12px;
+            background-color: var(--background-dark);
+            border-bottom: 1px solid var(--background-light);
+        }
+        .search-input {
+            background-color: var(--panel-header-background);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+        }
+        .search-input input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            padding: 10px 15px;
+            width: 100%;
+        }
+        .chat-list {
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+        .chat-list-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--background-light);
+        }
+        .chat-list-item:hover {
+            background-color: var(--background-light);
+        }
+        .chat-list-item.active {
+            background-color: #2a3942;
+        }
+        .chat-list-item .text-content {
+            flex-grow: 1;
+            margin-left: 15px;
+            overflow: hidden;
+        }
+        .chat-list-item .name-time {
+            display: flex;
+            justify-content: space-between;
+        }
+        .chat-list-item .name { font-weight: 400; }
+        .chat-list-item .time { font-size: 0.75rem; color: var(--text-secondary); }
+        .chat-list-item .message {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* --- Chat View --- */
+        .chat-view {
+            width: 70%;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #0b141a; /* Exact dark background */
+            position: relative;
+        }
+        /* The corner image and background pattern */
+        .chat-view::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png');
+            opacity: 0.06;
+            pointer-events: none;
+        }
+        .chat-header {
+            background-color: var(--panel-header-background);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-left: 1px solid var(--background-light);
+            z-index: 10;
+        }
+        .profile-pic-container {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .profile-pic { width: 100%; height: 100%; object-fit: cover; }
+        .profile-initial {
+            width: 100%; height: 100%;
+            background-color: #687782; display: flex;
+            align-items: center; justify-content: center;
+            font-size: 1.5rem; font-weight: 500;
+        }
+        .contact-name { font-size: 1rem; font-weight: 400; cursor: pointer; }
+        .chat-header-icons {
+            margin-left: auto;
+            display: flex;
+            gap: 28px;
+            color: var(--icon-color);
+            font-size: 1.2rem;
+        }
+        .chat-area {
+            flex-grow: 1; padding: 20px; overflow-y: auto;
+            display: flex; flex-direction: column; position: relative;
+        }
+        .chat-bubble {
+            max-width: 65%; padding: 6px 9px; border-radius: 8px;
+            margin-bottom: 12px; position: relative;
+            font-size: 0.9rem; line-height: 1.4;
+        }
+        .chat-bubble-sent { background-color: var(--sent-bubble); align-self: flex-end; }
+        .chat-bubble-received { background-color: var(--background-light); align-self: flex-start; }
+        .message-text { cursor: text; padding-right: 60px; }
+        .message-text:focus { outline: 1px dashed var(--text-secondary); border-radius: 3px; }
+        .timestamp {
+            font-size: 0.7rem; color: var(--text-secondary);
+            position: absolute; bottom: 5px; right: 8px;
+            display: flex; align-items: center; user-select: none;
+        }
+        .timestamp .fa-check-double { color: #53bdeb; margin-left: 4px; }
+        .day-separator {
+            align-self: center; background-color: #182229;
+            color: var(--text-secondary); padding: 5px 10px;
+            border-radius: 8px; font-size: 0.75rem;
+            margin: 10px 0; cursor: pointer;
+        }
+        .chat-footer {
+            background-color: var(--panel-header-background);
+            padding: 10px 20px; display: flex;
+            align-items: center; gap: 15px; z-index: 10;
+        }
+        .chat-footer .fa-regular { font-size: 1.4rem; color: var(--icon-color); }
+        .chat-input-wrapper {
+            background-color: #2a3942;
+            border-radius: 8px;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+        }
+        .chat-input-wrapper input {
+            background: transparent; border: none; outline: none;
+            color: var(--text-primary); padding: 12px 15px; width: 100%;
+        }
+        .controls {
+            padding: 10px 20px;
+            background-color: var(--background-dark);
+            display: flex; gap: 10px; align-items: center;
+            border-top: 1px solid var(--background-light);
+        }
+        .control-btn {
+            background-color: #2a3942; color: var(--text-secondary);
+            border: none; padding: 8px 12px; border-radius: 8px;
+            cursor: pointer; font-size: 0.8rem;
+        }
+        .delete-btn {
+            position: absolute; top: -8px; right: -8px;
+            background-color: #f44336; color: white; border: none;
+            border-radius: 50%; width: 20px; height: 20px;
+            font-size: 12px; cursor: pointer; display: none;
+            align-items: center; justify-content: center; z-index: 10;
+        }
+        .chat-bubble:hover .delete-btn { display: flex; }
+    </style>
+</head>
+<body>
+
+    <div class="whatsapp-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <header class="sidebar-header">
+                <div class="profile-pic-container"><div class="profile-initial">Me</div></div>
+                <div class="sidebar-icons">
+                    <i class="fa-solid fa-users"></i>
+                    <i class="fa-solid fa-circle-notch"></i>
+                    <i class="fa-solid fa-message"></i>
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                </div>
+            </header>
+            <div class="search-container">
+                <div class="search-input">
+                    <i class="fa-solid fa-magnifying-glass text-gray-500"></i>
+                    <input type="text" placeholder="Search or start new chat">
+                </div>
+            </div>
+            <div class="chat-list">
+                <div class="chat-list-item active">
+                    <div id="sidebar-dp-container" class="profile-pic-container"></div>
+                    <div class="text-content">
+                        <div class="name-time">
+                            <span id="sidebar-name" class="name">Mummy</span>
+                            <span class="time">Yesterday</span>
+                        </div>
+                        <p class="message"><i class="fa-solid fa-link text-sm"></i> https://youtube.com/shorts/...</p>
+                    </div>
+                </div>
+            </div>
+             <div class="controls">
+                <button id="add-sent" class="control-btn">Add Sent</button>
+                <button id="add-received" class="control-btn">Add Received</button>
+                <button id="add-day" class="control-btn">Add Day</button>
+            </div>
+        </aside>
+
+        <!-- Main Chat View -->
+        <main class="chat-view">
+            <header class="chat-header">
+                <div id="contact-dp-container" class="profile-pic-container"></div>
+                <input type="file" id="dp-upload" class="hidden" accept="image/*">
+                <div>
+                    <h2 id="contact-name" class="contact-name">Mummy</h2>
+                </div>
+                <div class="chat-header-icons">
+                    <i class="fa-solid fa-video"></i>
+                    <i class="fa-solid fa-phone"></i>
+                    <div class="border-l border-gray-600 h-6"></div>
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                </div>
+            </header>
+
+            <div id="chat-area" class="chat-area"></div>
+
+            <footer class="chat-footer">
+                <i class="fa-regular fa-face-smile"></i>
+                <i class="fa-solid fa-paperclip"></i>
+                <div class="chat-input-wrapper">
+                    <input type="text" placeholder="Type a message">
+                </div>
+                <i class="fa-solid fa-microphone"></i>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        const contactNameEl = document.getElementById('contact-name');
+        const contactDpContainer = document.getElementById('contact-dp-container');
+        const sidebarDpContainer = document.getElementById('sidebar-dp-container');
+        const dpUploadEl = document.getElementById('dp-upload');
+        const chatArea = document.getElementById('chat-area');
+        const sidebarNameEl = document.getElementById('sidebar-name');
+
+        function updateDp(src) {
+            const name = contactNameEl.textContent || 'M';
+            const dpHtml = src 
+                ? `<img src="${src}" class="profile-pic">` 
+                : `<div class="profile-initial">${name[0].toUpperCase()}</div>`;
+            contactDpContainer.innerHTML = dpHtml;
+            sidebarDpContainer.innerHTML = dpHtml;
+        }
+
+        function saveChat() {
+            const dpImg = contactDpContainer.querySelector('img');
+            const chatData = {
+                name: contactNameEl.textContent,
+                dp: dpImg ? dpImg.src : null,
+                html: chatArea.innerHTML
+            };
+            localStorage.setItem('whatsappDesktopChatData', JSON.stringify(chatData));
+        }
+
+        function loadChat() {
+            const savedData = localStorage.getItem('whatsappDesktopChatData');
+            if (savedData) {
+                const chatData = JSON.parse(savedData);
+                contactNameEl.textContent = chatData.name;
+                sidebarNameEl.textContent = chatData.name;
+                updateDp(chatData.dp);
+                chatArea.innerHTML = chatData.html;
+                attachAllListeners();
+            } else {
+                loadDefaultTemplate();
+            }
+        }
+        
+        function attachAllListeners() {
+            chatArea.querySelectorAll('.message-text').forEach(el => makeEditable(el, saveChat));
+            chatArea.querySelectorAll('.delete-btn').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    e.currentTarget.closest('.chat-bubble, .day-separator').remove();
+                    saveChat();
+                });
+            });
+            chatArea.querySelectorAll('.day-separator').forEach(el => makeEditable(el, saveChat));
+        }
+
+        function loadDefaultTemplate() {
+            createBubble('Saturday', 'day');
+            createBubble('https://youtube.com/shorts/Sye2lBznE3A?si=_us9Qyi8J4tWzoFX', 'sent');
+            createBubble('Yesterday', 'day');
+            createBubble('https://youtube.com/shorts/DpfutUgfxg?si=FOeP48MGwn62uSY_', 'sent');
+        }
+
+        function makeEditable(element, onSave) {
+            element.addEventListener('click', (e) => {
+                 if (e.target.classList.contains('delete-btn') || e.target.closest('.delete-btn')) return;
+                element.setAttribute('contenteditable', 'true');
+                element.focus();
+                document.execCommand('selectAll', false, null);
+
+                element.onblur = () => {
+                    element.setAttribute('contenteditable', 'false');
+                    if (onSave) onSave(element.textContent);
+                };
+                element.onkeydown = (ev) => {
+                    if (ev.key === 'Enter' && !ev.shiftKey) {
+                        ev.preventDefault();
+                        element.blur();
+                    }
+                };
+            });
+        }
+
+        makeEditable(contactNameEl, (newName) => {
+            sidebarNameEl.textContent = newName;
+            updateDp(contactDpContainer.querySelector('img')?.src);
+            saveChat();
+        });
+
+        contactDpContainer.addEventListener('click', () => dpUploadEl.click());
+        dpUploadEl.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    updateDp(e.target.result);
+                    saveChat();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function createBubble(text, type) {
+            const bubble = document.createElement('div');
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).replace(' ', '');
+
+            if (type === 'day') {
+                bubble.className = 'day-separator';
+                bubble.textContent = text;
+                makeEditable(bubble, saveChat);
+            } else {
+                bubble.className = `chat-bubble chat-bubble-${type}`;
+                bubble.innerHTML = `<div class="message-text">${text}</div>
+                    <div class="timestamp">${time} ${type === 'sent' ? '<i class="fa-solid fa-check-double"></i>' : ''}</div>`;
+                makeEditable(bubble.querySelector('.message-text'), saveChat);
+            }
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerHTML = '<i class="fa-solid fa-times"></i>';
+            deleteBtn.onclick = (e) => {
+                e.currentTarget.parentElement.remove();
+                saveChat();
+            };
+            bubble.appendChild(deleteBtn);
+
+            chatArea.appendChild(bubble);
+            saveChat();
+        }
+
+        document.getElementById('add-sent').addEventListener('click', () => createBubble('New message', 'sent'));
+        document.getElementById('add-received').addEventListener('click', () => createBubble('New message', 'received'));
+        document.getElementById('add-day').addEventListener('click', () => createBubble('Today', 'day'));
+
+        window.onload = loadChat;
+    </script>
+</body>
+</html>

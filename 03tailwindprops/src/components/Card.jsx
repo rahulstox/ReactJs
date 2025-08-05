@@ -1,4 +1,4 @@
-import React from 'react'
+import PropTypes from 'prop-types';
 
 function Card({username, btnText="visit me"}) {
     console.log(username);
@@ -23,5 +23,9 @@ function Card({username, btnText="visit me"}) {
 </div>
   )
 }
+Card.propTypes = {
+  username: PropTypes.string.isRequired,
+  btnText: PropTypes.string
+};
 
 export default Card
